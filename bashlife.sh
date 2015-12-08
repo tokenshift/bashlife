@@ -1,11 +1,4 @@
 #!/bin/sh
-
-# Options:
-# -r {N}
-# Perform N iterations/frames.
-# -p
-# Pause for user input between each frame.
-
 LIVE_CELL='x'
 DEAD_CELL='-'
 
@@ -108,4 +101,45 @@ processInput () {
 	processLine
 }
 
-processInput
+# Options:
+# -r {N}
+# Perform N iterations/frames. -1 means iterate infinitely.
+# -p {seconds}
+# Pause for user input between each frame.
+
+PAUSE_BETWEEN_FRAMES=0
+ITERATIONS=1
+
+for arg in "$@"; do
+	if [ "$setting" = "iterations" ]; then
+		ITERATIONS="$arg"
+		setting=''
+	elif [ "$setting" = "pause" ]; then
+		PAUSE_BETWEEN_FRAMES="$arg"
+		setting=''
+	elif [ "$arg" = "-r" ]; then
+		setting="iterations"
+	elif [ "$arg" = "-p" ]; then
+		setting="pause"
+	else
+		>&2 echo "Unrecognized argument: $arg"
+		exit 1
+	fi
+done
+
+for (( i=0; i!=$ITERATIONS; i++ )); do
+	old_temp_file="$new_temp_file"
+	new_temp_file=`mktemp -t bashlife`
+
+	if [ "$i" -eq 0 ]; then
+		# Read initial state from stdin
+		processInput | tee "$new_temp_file"
+	else
+		if [ "$PAUSE_BETWEEN_FRAMES" -ne 0 ]; then
+			sleep $PAUSE_BETWEEN_FRAMES
+		fi
+
+		# Read state from temp file
+		processInput < "$old_temp_file" | tee "$new_temp_file"
+	fi
+done
