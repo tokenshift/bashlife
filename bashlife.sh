@@ -16,10 +16,12 @@
 LIVE_CELL='x'
 DEAD_CELL='-'
 
-output () {
-	prev_row="$1"
-	curr_row="$2"
-	next_row="$3"
+prev_row=''
+curr_row=''
+next_row=''
+
+process_line () {
+	# echo "[ <$prev_row> <$curr_row> <$next_row> ]"
 
 	if [ -z "$prev_row" ] && [ -z "$curr_row" ]; then return; fi
 
@@ -90,20 +92,23 @@ output () {
 	echo ""
 }
 
-rows=()
-row_i=0
-
 while read line; do
-	rows[row_i]="$line"
-
 	if [ -z "$line" ]; then
 		break
 	fi
-	
-	output "${rows[$(( (row_i + 1) % 3 ))]}" "${rows[$(( (row_i + 2) % 3 ))]}" "${rows[$row_i]}"
 
-	row_i=$(( (row_i + 1) % 3 ))
+	prev_row="$curr_row"
+	curr_row="$next_row"
+	next_row="$line"
+	process_line
 done
 
-output "${rows[$(( (row_i + 1) % 3 ))]}" "${rows[$(( (row_i + 2) % 3 ))]}" "${rows[$row_i]}"
-output "${rows[$(( (row_i + 2) % 3 ))]}" "${rows[$row_i]}" ""
+prev_row="$curr_row"
+curr_row="$next_row"
+next_row=""
+process_line
+
+prev_row="$curr_row"
+curr_row=""
+next_row=""
+process_line
